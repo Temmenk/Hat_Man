@@ -3,6 +3,8 @@ using TMPro;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
 public class Menu : MonoBehaviourPunCallbacks
 {
@@ -18,6 +20,8 @@ public class Menu : MonoBehaviourPunCallbacks
     public TextMeshProUGUI playerListText;
     public Button startGameButton;
 
+    [Header("Components")]
+    public PhotonView photonView;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -27,13 +31,14 @@ public class Menu : MonoBehaviourPunCallbacks
         joinRoomButton.interactable = false;
     }
 
-        // called when we connect to the master server
-        // enable the "Create Room" and "Join Room" buttons
-        public override void OnConnectedToMaster ()
-        {
-        createRoomButton.interactable = true;
-        joinRoomButton.interactable = true;
-        }
+    // called when we connect to the master server
+    // enable the "Create Room" and "Join Room" buttons
+    public override void OnConnectedToMaster ()
+    {
+    createRoomButton.interactable = true;
+    joinRoomButton.interactable = true;
+    }
+
     void SetScreen(GameObject screen)
     {
         // deactivcate all screens
@@ -59,18 +64,17 @@ public class Menu : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom ()
     {
         SetScreen(lobbyScreen);
-        // since there's now a new player in the lobby, tell everyone to update the lobby UI
-        photonView.RPC("UpdateLobbyUI", RpcTarget.All);
+                
     }
     [PunRPC]
-    public void UpdateLobbyUI ()
+    public void UpdateLobbyUI()
     {
         playerListText.text = "";
         // display all the players currently in the lobby
         foreach(Player player in PhotonNetwork.PlayerList)
-            {
-                playerListText.text += player.NickName + "\n";
-            }
+        {
+            playerListText.text += player.NickName + "\n";
+        }
         // only the host can start the game
         if(PhotonNetwork.IsMasterClient)
             startGameButton.interactable = true;
