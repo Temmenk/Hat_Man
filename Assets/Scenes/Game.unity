@@ -135,7 +135,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &29896934
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1148,7 +1148,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &467038702
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1855,7 +1855,7 @@ GameObject:
   - component: {fileID: 1032117343}
   - component: {fileID: 1032117342}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: WinText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2379,7 +2379,9 @@ MonoBehaviour:
   - {fileID: 77722585}
   - {fileID: 534559300}
   - {fileID: 1607726661}
-  players: []
+  players:
+  - {fileID: 0}
+  - {fileID: 0}
   playerWithHat: 0
 --- !u!4 &1210997100
 Transform:
