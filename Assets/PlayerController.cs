@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
     [Header("Components")]
     public Rigidbody rig;
     public Player photonPlayer;
+    public Camera playerCamera;
 
     // called when the player object is instantiated
     [PunRPC]
@@ -37,7 +38,14 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         // if this isn't our local player, disable physics as that's
         // controlled by the user and synced to all other clients
         if (!photonView.IsMine)
-            rig.isKinematic = true;
+            {
+                rig.isKinematic = true;
+                playerCamera.gameObject.SetActive(false); 
+            }
+        else
+        {
+            playerCamera.gameObject.SetActive(true);
+        }
     }
 
 
