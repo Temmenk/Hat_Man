@@ -7,7 +7,7 @@ using Photon.Pun;
 public class GameUI : MonoBehaviour
 {
 public PlayerUIContainer[] playerContainers;
-public TextMeshProUGUI winText;
+public TextMeshProUGUI winText; 
 [Header("Components")]
 public PhotonView photonView;
 private float updateTimer;
