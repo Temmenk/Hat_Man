@@ -23,6 +23,8 @@ public class GameManager : MonoBehaviourPunCallbacks
     // instance
     public static GameManager instance;
 
+    public GameObject mapHat;
+
     private void Awake()
     {
         // lazy singleton - see NetworkManager for better implementation of this pattern
@@ -82,6 +84,20 @@ public class GameManager : MonoBehaviourPunCallbacks
         GetPlayer(playerId).SetHat(true);
         hatPickupTime = Time.time;
     }
+    [PunRPC]
+    public void PlayerGrabbedHat(int playerId)
+    {
+        if (gameEnded)
+            return;
+
+        gameEnded = true;
+
+        photonView.RPC(
+            "WinGame",
+            RpcTarget.All,
+            playerId
+        );
+    }
 
     // is the player able to take the hat at this current time?
     public bool CanGetHat()
@@ -93,9 +109,16 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    void WinGame(int playerId)
+    public void WinGame(int playerId)
     {
+            // Hide the pickup hat
+        mapHat.SetActive(false);
+
+        // Put the cosmetic hat on the winner
+        players[playerId - 1].SetHat(true);
+
         gameEnded = true;
+
         PlayerController player = GetPlayer(playerId);
 
         // set the UI to show who's won

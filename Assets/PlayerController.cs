@@ -14,6 +14,11 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
     public float jumpForce;
     public GameObject hatObject;
 
+    [Header("Bash")]
+    public float bashRange = 2.0f;
+    public float bashForce = 10.0f;
+    public float bashUpForce = 3.0f;
+
     [HideInInspector]
     public float curHatTime;
 
@@ -21,6 +26,13 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
     public Rigidbody rig;
     public Player photonPlayer;
     public Camera playerCamera;
+
+    [Header("Camera")]
+    public float mouseSensitivity = 2.0f;
+    public float minCameraAngle = -60.0f;
+    public float maxCameraAngle = 60.0f;
+
+    private float cameraPitch = 0.0f;
 
     // called when the player object is instantiated
     [PunRPC]
@@ -32,8 +44,8 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         GameManager.instance.players[id - 1] = this;
 
         // give the first player the hat
-        if (id == 1)
-            GameManager.instance.GiveHat(id, true);
+        //if (id == 1)
+           // GameManager.instance.GiveHat(id, true);
 
         // if this isn't our local player, disable physics as that's
         // controlled by the user and synced to all other clients
@@ -45,6 +57,11 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         else
         {
             playerCamera.gameObject.SetActive(true);
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            {
+                
+            }
         }
     }
 
@@ -54,9 +71,12 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         if (photonView.IsMine)
         {
             Move();
+            RotateCamera();
 
             if (Input.GetKeyDown(KeyCode.Space))
                 TryJump();
+            if(Input.GetKeyDown(KeyCode.B))
+                TryBash();
 
             // track the amount of time we're wearing the hat
             if (hatObject.activeInHierarchy)
@@ -78,10 +98,40 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
 
     void Move()
     {
-        float x = Input.GetAxis("Horizontal") * moveSpeed;
-        float z = Input.GetAxis("Vertical") * moveSpeed;
+        float x = Input.GetAxis("Horizontal");
+        float z = Input.GetAxis("Vertical");
 
-        rig.linearVelocity = new Vector3(x, rig.linearVelocity.y, z);
+        Vector3 moveDirection =
+            transform.right * x +
+            transform.forward * z;
+
+        moveDirection = moveDirection.normalized * moveSpeed;
+
+        rig.linearVelocity = new Vector3(
+            moveDirection.x,
+            rig.linearVelocity.y,
+            moveDirection.z
+        );
+    }
+
+    void RotateCamera()
+    {
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+
+        // Turn the entire player left/right
+        transform.Rotate(Vector3.up * mouseX);
+
+        // Look up/down with the camera
+        cameraPitch -= mouseY;
+        cameraPitch = Mathf.Clamp(
+            cameraPitch,
+            minCameraAngle,
+            maxCameraAngle
+        );
+
+        playerCamera.transform.localRotation =
+            Quaternion.Euler(cameraPitch, 0f, 0f);
     }
 
     void TryJump()
@@ -92,27 +142,54 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
             rig.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
     }
 
+    void TryBash()
+    {
+        RaycastHit hit;
+
+        if(Physics.Raycast(transform.position, transform.forward, out hit, bashRange))
+        {
+            PlayerController otherPlayer =
+                hit.collider.GetComponentInParent<PlayerController>();
+            
+            if(otherPlayer != null && otherPlayer !=this)
+            {
+                Vector3 bashDirection =
+                    transform.forward * bashForce + Vector3.up * bashUpForce;
+
+                otherPlayer.photonView.RPC(
+                    "ReceiveBash",
+                    otherPlayer.photonPlayer,
+                    bashDirection
+                );
+            }
+        }
+    }
+    [PunRPC]
+    void ReceiveBash(Vector3 force)
+    {
+        rig.AddForce(force, ForceMode.Impulse);
+    }
     public void SetHat(bool hasHat)
     {
         hatObject.SetActive(hasHat);
     }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (!photonView.IsMine)
-            return;
+    // private void OnCollisionEnter(Collision collision)
+    // {
+    //     if (!photonView.IsMine)
+    //         return;
 
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            if (GameManager.instance.GetPlayer(collision.gameObject).id == GameManager.instance.playerWithHat)
-            {
-                if (GameManager.instance.CanGetHat())
-                {
-                    GameManager.instance.photonView.RPC("GiveHat", RpcTarget.All, id, false);
-                }
-            }
-        }
-    }
+    //     if (collision.gameObject.CompareTag("Player"))
+    //     {
+    //         if (GameManager.instance.GetPlayer(collision.gameObject).id == GameManager.instance.playerWithHat)
+    //         {
+    //             if (GameManager.instance.CanGetHat())
+    //             {
+    //                 GameManager.instance.photonView.RPC("GiveHat", RpcTarget.All, id, false);
+    //             }
+    //         }
+    //     }
+    // }
 
     // from IPunObservable - allows us to send and receive data
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
